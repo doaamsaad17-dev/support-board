@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support Board</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#1d2330;--muted:#6b7385;--line:#e3e6ec;--accent:#2a7de1;--new:#e8890c;--prog:#2a7de1;--done:#2e9e5b}
+@media (prefers-color-scheme:dark){:root{--bg:#14171d;--card:#1d222b;--text:#e8ebf1;--muted:#9aa3b5;--line:#2c3340;--accent:#5b9cf0;--new:#f0a040;--prog:#5b9cf0;--done:#4fc07f}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:20px 16px 40px}
+.auth-shell{max-width:440px;margin:8vh auto;padding:20px 16px}
+.auth-shell .panel{margin-top:18px}
+.auth-shell form{display:grid;gap:10px}
+.auth-shell label{display:grid;gap:4px}
+.password-control{display:flex;gap:6px}
+.password-control input{flex:1;min-width:0}
+.auth-shell button{margin-top:4px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.topbar .row{align-items:center}
+.message{color:var(--muted);min-height:1.4em}
+.error{color:#b42318}
+.credentials{overflow-wrap:anywhere;font-family:ui-monospace,monospace}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 18px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row > .panel{flex:1 1 100%;margin:8px 0 0}
+.assignment-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:8px}
+.assignment-option{display:flex;align-items:center;gap:8px;min-width:0;padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:8px;cursor:pointer}
+.assignment-option input{flex:0 0 auto;min-width:0;margin:0;accent-color:var(--accent)}
+.assignment-option span{min-width:0;overflow-wrap:anywhere}
+input,select,textarea,button{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+input,textarea{flex:1 1 180px;min-width:0}
+textarea{width:100%;margin-top:8px;resize:vertical}
+button{cursor:pointer}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.priority-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;margin-bottom:8px}
+.priority-urgent{background:#ffe1e1;color:#9f1d1d;border:1px solid #f3b5b5}
+.priority-normal{background:#eaf3ff;color:#1f5ca4;border:1px solid #cfe0ff}
+.team-label{display:inline-block;padding:3px 8px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:3px 6px 3px 12px;display:flex;align-items:center;gap:4px}
+.chip button{border:0;background:none;padding:0 6px;color:var(--muted)}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:760px){.board{grid-template-columns:1fr}}
+.col h2{font-size:14px;margin:0 0 8px;display:flex;justify-content:space-between;text-transform:uppercase;letter-spacing:.04em}
+.col .count{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.card h3{font-size:15px;margin:0 0 2px}
+.card p{margin:2px 0 6px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
+.meta{font-size:12px;color:var(--muted);margin-bottom:8px}
+.card .row button,.card .row select{padding:4px 8px;font-size:13px}
+.empty{color:var(--muted);font-size:13px;padding:8px 2px}
+.task-modal{width:min(640px,calc(100% - 32px));max-height:calc(100% - 32px);padding:0;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text)}
+.task-modal::backdrop{background:rgba(10,15,25,.62)}
+.task-modal-content{padding:22px}
+.task-modal-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.task-modal-header h2{margin:0 0 16px;font-size:20px;overflow-wrap:anywhere}
+.task-modal-close{flex:0 0 auto}
+.task-modal-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.task-modal-field{min-width:0;padding:10px;background:var(--bg);border:1px solid var(--line);border-radius:8px}
+.task-modal-field strong{display:block;margin-bottom:3px;font-size:12px;color:var(--muted)}
+.task-modal-field span{display:block;overflow-wrap:anywhere}
+.task-modal-details{margin-top:14px}
+.task-modal-details p{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:480px){.task-modal-fields{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main id="authScreen" class="auth-shell" hidden>
+  <h1>Support Board</h1>
+  <p class="sub" id="authSubtitle"></p>
+  <div class="panel">
+    <p class="message" id="authNotice" role="status"></p>
+    <p class="message error" id="authError" role="alert"></p>
+    <form id="setupForm" hidden>
+      <strong>Create the admin account</strong>
+      <label>Username <input id="setupUsername" autocomplete="username" required minlength="3" maxlength="32"></label>
+      <label>Password (at least 8 characters) <span class="password-control"><input id="setupPassword" type="password" autocomplete="new-password" required minlength="8"><button type="button" data-password-toggle="setupPassword" aria-pressed="false">Show</button></span></label>
+      <label>Confirm password <span class="password-control"><input id="setupConfirmPassword" type="password" autocomplete="new-password" required minlength="8"><button type="button" data-password-toggle="setupConfirmPassword" aria-pressed="false">Show</button></span></label>
+      <button class="primary" type="submit">Create admin account</button>
+    </form>
+    <form id="loginForm" hidden>
+      <strong>Sign in</strong>
+      <label>Username <input id="loginUsername" autocomplete="username" required></label>
+      <label>Password <span class="password-control"><input id="loginPassword" type="password" autocomplete="current-password" required><button type="button" data-password-toggle="loginPassword" aria-pressed="false">Show</button></span></label>
+      <button class="primary" type="submit">Sign in</button>
+      <button id="showRegister" type="button">Create an account</button>
+    </form>
+    <form id="registerForm" hidden>
+      <strong>Create an account</strong>
+      <label>Username  <input id="registerUsername" autocomplete="username" required minlength="3" maxlength="12"></label>
+      <label>Password (at least 8 characters) <span class="password-control"><input id="registerPassword" type="password" autocomplete="new-password" required minlength="8"><button type="button" data-password-toggle="registerPassword" aria-pressed="false">Show</button></span></label>
+      <label>Confirm password <span class="password-control"><input id="registerConfirmPassword" type="password" autocomplete="new-password" required minlength="8"><button type="button" data-password-toggle="registerConfirmPassword" aria-pressed="false">Show</button></span></label>
+      <button class="primary" type="submit">Create account</button>
+      <button id="showLogin" type="button">Back to sign in</button>
+    </form>
+    <form id="passwordForm" hidden>
+      <strong>Set a new password to continue</strong>
+      <label>Current password <span class="password-control"><input id="currentPassword" type="password" autocomplete="current-password"><button type="button" data-password-toggle="currentPassword" aria-pressed="false">Show</button></span></label>
+      <label>New password (at least 8 characters) <span class="password-control"><input id="newPassword" type="password" autocomplete="new-password" required minlength="8"><button type="button" data-password-toggle="newPassword" aria-pressed="false">Show</button></span></label>
+      <label>Confirm new password <span class="password-control"><input id="confirmPassword" type="password" autocomplete="new-password" required minlength="8"><button type="button" data-password-toggle="confirmPassword" aria-pressed="false">Show</button></span></label>
+      <button class="primary" type="submit">Change password</button>
+    </form>
+  </div>
+</main>
+<main id="boardApp" hidden>
+  <div class="topbar">
+    <div>
+  <h1>Support Board</h1>
+  <p class="sub">Add and organize customer issues on this board.</p>
+    </div>
+    <div class="row">
+      <span id="accountLabel" class="meta"></span>
+      <button id="changePassword" type="button">Change password</button>
+      <button id="logout">Sign out</button>
+    </div>
+  </div>
+
+  <p id="appMessage" class="message" role="status"></p>
+
+  <div class="panel">
+    <div class="row">
+      <input id="title" placeholder="Issue title">
+      <input id="customer" placeholder="Name">
+      <input id="phone" placeholder="Phone number">
+      <input id="email" type="email" placeholder="Email address">
+    </div>
+    <textarea id="details" rows="1" placeholder="Details"></textarea>
+    <div class="row" style="margin-top:8px">
+      <select id="userType" aria-label="Customer type">
+        <option value="buyer">Buyer</option>
+        <option value="merchant">Merchant</option>
+      </select>
+      <select id="priority">
+        <option value="normal">Normal priority</option>
+        <option value="urgent">Urgent priority</option>
+      </select>
+      <div class="panel assignment-panel">
+        <strong>Assign to</strong>
+        <div class="assignment-options" id="assigneeChoices" role="radiogroup" aria-label="Assign to"></div>
+      </div>
+      <button class="primary" id="add">Add issue</button>
+    </div>
+  </div>
+
+  <div class="row" style="margin-bottom:12px">
+    <input id="q" placeholder="Search Name or text">
+    <select id="fcat"></select>
+  </div>
+
+  <div class="board" id="board"></div>
+</main>
+<dialog id="taskModal" class="task-modal" aria-labelledby="taskModalTitle">
+  <div class="task-modal-content">
+    <div class="task-modal-header">
+      <h2 id="taskModalTitle"></h2>
+      <button class="task-modal-close" id="closeTaskModal" type="button" aria-label="Close task details">Close</button>
+    </div>
+    <div class="task-modal-fields">
+      <div class="task-modal-field"><strong>Customer name</strong><span id="modalCustomer"></span></div>
+      <div class="task-modal-field"><strong>Phone number</strong><span id="modalPhone"></span></div>
+      <div class="task-modal-field"><strong>Email</strong><span id="modalEmail"></span></div>
+      <div class="task-modal-field"><strong>Customer type</strong><span id="modalUserType"></span></div>
+      <div class="task-modal-field"><strong>Assigned team</strong><span id="modalAssignee"></span></div>
+      <div class="task-modal-field"><strong>Priority</strong><span id="modalPriority"></span></div>
+      <div class="task-modal-field"><strong>Status</strong><span id="modalStatus"></span></div>
+      <div class="task-modal-field"><strong>Created</strong><span id="modalCreated"></span></div>
+    </div>
+    <div class="task-modal-field task-modal-details">
+      <strong>Details</strong>
+      <p id="modalDetails"></p>
+    </div>
+  </div>
+</dialog>
+<script>
+(function(){
+  var COLS=[{k:"new",t:"New",c:"var(--new)"},{k:"progress",t:"In progress",c:"var(--prog)"},{k:"done",t:"Done",c:"var(--done)"}];
+  var TEAM_OPTIONS=["Accounts & Verification","Live Stream & Seller Support","Orders & Delivery","Payments & Refunds","Technical Support",];
+  var tasks=[],team=TEAM_OPTIONS,last="",currentUser=null,pollTimer=null,$=function(i){return document.getElementById(i)};
+  function boardStatus(status){return status==="inbox"?"new":status;}
+  function h(tag,props,kids){var e=document.createElement(tag);for(var k in (props||{})){if(k==="text")e.textContent=props[k];else if(k==="on")for(var ev in props.on)e.addEventListener(ev,props.on[ev]);else e.setAttribute(k,props[k])}(kids||[]).forEach(function(x){e.appendChild(x)});return e}
+  function request(url,options){
+    return fetch(url,options||{}).then(function(r){
+      return r.json().catch(function(){return {}}).then(function(data){
+        if(!r.ok){var error=new Error(data.error||"Request failed ("+r.status+")");error.status=r.status;throw error}
+        return data;
+      });
+    });
+  }
+  function post(url,data){return request(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)})}
+  function clearCredentials(){
+    ["setupPassword","setupConfirmPassword","loginPassword","registerPassword","registerConfirmPassword","currentPassword","newPassword","confirmPassword"].forEach(function(id){$(id).value=""});
+  }
+  function showAuth(mode,message){
+    if(pollTimer){clearInterval(pollTimer);pollTimer=null}
+    $("boardApp").hidden=true;$("authScreen").hidden=false;
+    $("setupForm").hidden=mode!=="setup";$("loginForm").hidden=mode!=="login";$("registerForm").hidden=mode!=="register";$("passwordForm").hidden=mode!=="password";
+    $("authError").textContent="";$("authNotice").textContent=message||"";
+    $("authSubtitle").textContent=mode==="setup"?"Create the first admin account to start using this board.":mode==="register"?"Choose a new username and password for your account.":mode==="password"?"Choose a password with at least 8 characters.":"Sign in to access the team board.";
+    $("currentPassword").parentNode.hidden=!currentUser||currentUser.mustChangePassword;
+    $("currentPassword").required=!!currentUser&&!currentUser.mustChangePassword;
+  }
+  function appError(error){
+    if(error.status===401){authenticate();return}
+    $("appMessage").textContent=error.message||"Something went wrong.";
+    $("appMessage").className="message error";
+  }
+  function authenticate(){
+    request("/api/auth/status").then(function(status){
+      currentUser=status.user;
+      if(!currentUser)showAuth(status.setupRequired?"setup":"login");
+      else if(currentUser.mustChangePassword)showAuth("password");
+      else startApp(currentUser);
+    }).catch(function(error){showAuth("login",error.message)});
+  }
+  function startApp(user){
+    currentUser=user;
+    $("authScreen").hidden=true;$("boardApp").hidden=false;
+    $("accountLabel").textContent=user.username+" ("+(user.role==="admin"?"admin":"user")+")";
+    $("appMessage").textContent="";$("appMessage").className="message";
+    load();
+    if(pollTimer)clearInterval(pollTimer);
+    pollTimer=setInterval(load,5000);
+  }
+  function submitAuth(endpoint,values){
+    $("authError").textContent="";
+    post(endpoint,values).then(function(result){
+      currentUser=result.user;
+      clearCredentials();
+      if(currentUser.mustChangePassword)showAuth("password");
+      else startApp(currentUser);
+    }).catch(function(error){$("authError").textContent=error.message});
+  }
+  function createAccount(endpoint,username,password){
+    $("authError").textContent="";
+    post(endpoint,{username:username,password:password}).then(function(result){
+      clearCredentials();
+      $("loginUsername").value=result.username;
+      showAuth("login","Account created. Please sign in with your new username and password.");
+    }).catch(function(error){$("authError").textContent=error.message});
+  }
+
+  function load(){
+    request("/api/state").then(function(s){
+      var str=JSON.stringify(s);if(str===last)return;last=str;tasks=s.tasks;team=TEAM_OPTIONS;render();
+    }).catch(appError);
+  }
+  function saveTask(t){post("/api/tasks",t).then(function(){last="";load()}).catch(appError)}
+  function defaultAssignee(){return team[0] || "";}
+  function fill(s,opts,first){var cur=s.value;s.textContent="";if(first!=null)s.appendChild(h("option",{value:"",text:first}));opts.forEach(function(o){var v=typeof o==="string"?o:o.v,t=typeof o==="string"?o:o.t;s.appendChild(h("option",{value:v,text:t}))});s.value=cur}
+
+  function priorityWeight(p){return p==="urgent"?0:1;}
+
+  function render(){
+    var choices=$("assigneeChoices"),selected=choices.querySelector('input[name="newAssignee"]:checked'),current=(selected&&selected.value)?selected.value:defaultAssignee();
+    choices.textContent="";
+    team.map(function(n){return {value:n,label:n}}).forEach(function(option){
+      var radio=h("input",{type:"radio",name:"newAssignee",value:option.value});radio.checked=option.value===current;
+      choices.appendChild(h("label",{class:"assignment-option"},[radio,h("span",{text:option.label})]));
+    });
+    fill($("fcat"),team.map(function(n){return n}),"All teams");
+    var board=$("board");board.textContent="";
+    COLS.forEach(function(col){
+      var q=$("q").value.trim().toLowerCase(),fc=$("fcat").value;
+      var list=tasks.filter(function(t){
+        if(boardStatus(t.status)!==col.k)return false;
+        if(fc&&t.assignee!==fc)return false;
+        if(q&&((t.customer||"")+" "+(t.phone||"")+" "+(t.email||"")+" "+(t.title||"")+" "+(t.details||"")).toLowerCase().indexOf(q)<0)return false;
+        return true;
+      }).sort(function(a,b){return priorityWeight(a.priority)-priorityWeight(b.priority) || b.created-a.created});
+      var c=h("div",{class:"col"},[h("h2",{style:"color:"+col.c},[h("span",{text:col.t}),h("span",{class:"count",text:String(list.length)})])]);
+      if(!list.length)c.appendChild(h("div",{class:"empty",text:"Nothing here"}));
+      list.forEach(function(t){c.appendChild(card(t,col))});
+      board.appendChild(c);
+    });
+  }
+
+  function card(t,col){
+    var type=h("select",{},[
+      h("option",{value:"buyer",text:"Buyer"}),
+      h("option",{value:"merchant",text:"Merchant"})
+    ]);
+    type.value=String(t.userType||"buyer").toLowerCase()==="merchant"?"merchant":"buyer";
+    type.addEventListener("change",function(){t.userType=type.value;saveTask(t)});
+    var p=h("select",{},[
+      h("option",{value:"normal",text:"Normal priority"}),
+      h("option",{value:"urgent",text:"Urgent priority"})
+    ]);
+    p.value=t.priority||"normal";
+    p.addEventListener("change",function(){t.priority=p.value;saveTask(t)});
+    var btns=[h("span",{class:"team-label",text:t.assignee||team[0]||"Unassigned"}),type,p];
+    COLS.forEach(function(o){if(o.k!==boardStatus(t.status))btns.push(h("button",{text:"→ "+o.t,on:{click:function(){t.status=o.k;saveTask(t)}}}))});
+    btns.push(h("button",{text:"Delete",on:{click:function(){if(confirm("Delete this issue?"))post("/api/delete",{id:t.id}).then(function(){last="";load()}).catch(appError)}}}));
+    var kids=[h("span",{class:"priority-badge priority-"+(t.priority==="urgent"?"urgent":"normal"),text:t.priority==="urgent"?"Urgent priority":"Normal priority"})];
+    kids.push(h("h3",{text:t.title}));
+    kids.push(h("div",{class:"meta",text:[t.customer,t.phone,t.email,new Date(t.created).toLocaleString()].filter(Boolean).join(" · ")}));
+    btns.push(h("button",{text:"View details",on:{click:function(){openTaskModal(t)}}}));
+    kids.push(h("div",{class:"row"},btns));
+    return h("div",{class:"card",style:"--c:"+col.c},kids);
+  }
+
+  function openTaskModal(t){
+    var created=t.created?new Date(t.created).toLocaleString():"Not specified";
+    var status=COLS.find(function(col){return col.k===boardStatus(t.status)});
+    $("taskModalTitle").textContent=t.title||"Untitled task";
+    $("modalCustomer").textContent=t.customer||"Not provided";
+    $("modalPhone").textContent=t.phone||"Not provided";
+    $("modalEmail").textContent=t.email||"Not provided";
+    $("modalUserType").textContent=String(t.userType||"Buyer").toLowerCase()==="merchant"?"Merchant":"Buyer";
+    $("modalAssignee").textContent=t.assignee||"Unassigned";
+    $("modalPriority").textContent=t.priority==="urgent"?"Urgent priority":"Normal priority";
+    $("modalStatus").textContent=status?status.t:(t.status||"New");
+    $("modalCreated").textContent=created;
+    $("modalDetails").textContent=t.details||"No details provided.";
+    $("taskModal").showModal();
+  }
+
+  $("add").addEventListener("click",function(){
+    var title=$("title").value.trim();if(!title){$("title").focus();return}
+    var choices=$("assigneeChoices");
+    var selected=choices.querySelector('input[name="newAssignee"]:checked') || choices.querySelector('input[name="newAssignee"]');
+    var assignee=selected ? selected.value : defaultAssignee();
+    var priority=$("priority").value || "normal";
+    saveTask({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:title,customer:$("customer").value.trim(),phone:$("phone").value.trim(),email:$("email").value.trim(),details:$("details").value.trim(),assignee:assignee,userType:$("userType").value,priority:priority,status:"new",created:Date.now()});
+    ["title","customer","phone","email","details"].forEach(function(i){$(i).value=""});
+    $("priority").value="normal";
+    var first=choices.querySelector('input[name="newAssignee"]');if(first)first.checked=true;
+  });
+
+  $("setupForm").addEventListener("submit",function(event){
+    event.preventDefault();
+    var username = $("setupUsername").value.trim();
+    var password = $("setupPassword").value;
+    if(password!==$("setupConfirmPassword").value){$("authError").textContent="Passwords do not match.";return}
+    createAccount("/api/auth/setup",username,password);
+  });
+  $("loginForm").addEventListener("submit",function(event){
+    event.preventDefault();
+    submitAuth("/api/auth/login",{username:$("loginUsername").value,password:$("loginPassword").value});
+  });
+  $("registerForm").addEventListener("submit",function(event){
+    event.preventDefault();
+    var password=$("registerPassword").value;
+    if(password!==$("registerConfirmPassword").value){$("authError").textContent="Passwords do not match.";return}
+    createAccount("/api/auth/register",$("registerUsername").value.trim(),password);
+  });
+  $("showRegister").addEventListener("click",function(){showAuth("register")});
+  $("showLogin").addEventListener("click",function(){showAuth("login")});
+  $("passwordForm").addEventListener("submit",function(event){
+    event.preventDefault();
+    var password = $("newPassword").value;
+    if(password!==$("confirmPassword").value){$("authError").textContent="Passwords do not match.";return}
+    post("/api/auth/password",{currentPassword:$("currentPassword").value,newPassword:password}).then(function(result){
+      currentUser=result.user;clearCredentials();startApp(currentUser);
+    }).catch(function(error){$("authError").textContent=error.message});
+  });
+  $("logout").addEventListener("click",function(){
+    post("/api/auth/logout",{}).then(function(){
+      currentUser=null;last="";clearCredentials();
+      authenticate();
+    }).catch(appError);
+  });
+  $("changePassword").addEventListener("click",function(){showAuth("password")});
+  $("closeTaskModal").addEventListener("click",function(){$("taskModal").close()});
+  $("taskModal").addEventListener("click",function(event){if(event.target===$("taskModal"))$("taskModal").close()});
+  document.querySelectorAll("[data-password-toggle]").forEach(function(button){
+    button.addEventListener("click",function(){
+      var input=$(button.getAttribute("data-password-toggle")),visible=input.type==="password";
+      input.type=visible?"text":"password";
+      button.textContent=visible?"Hide":"Show";
+      button.setAttribute("aria-pressed",String(visible));
+    });
+  });
+
+  ["q","fcat"].forEach(function(i){$(i).addEventListener("input",render);});
+
+  authenticate();
+})();
+</script>
+</body>
+</html>
