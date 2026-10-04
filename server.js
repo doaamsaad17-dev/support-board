@@ -5,6 +5,7 @@ const PORT = Number(process.env.PORT || 3000);
 const SESSION_MS = 12 * 60 * 60 * 1000;
 
 const FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
+const HTML_FILE = ['board.html', 'index.html'].map(name => path.join(__dirname, name)).find(p => fs.existsSync(p)) || path.join(__dirname, 'index.html');
 let db = { tasks: [], team: [], owners: {}, users: [] };
 if (fs.existsSync(FILE)) {
   db = Object.assign(db, JSON.parse(fs.readFileSync(FILE, 'utf8')));
@@ -13,7 +14,7 @@ if (fs.existsSync(FILE)) {
 if (!Array.isArray(db.users)) db.users = [];
 db.users.forEach(user => { if (user.role === 'member') user.role = 'user'; });
 // Old category names -> the new team names
-const MAP = { 'Account': 'Accounts & Verification', 'Live stream & selling': 'Live Stream & Seller Support', 'Buying & checkout': 'Orders & Delivery', 'Orders & delivery': 'Orders & Delivery', 'Refunds & returns': 'Payments & Refunds', 'Payments & payouts': 'Payments & Refunds', 'App bug / technical': 'Technical Support', 'Other': 'General / Other' };
+const MAP = { 'Account': 'Accounts & Verification', 'Live stream & selling': 'Live Stream & Seller Support', 'Buying & checkout': 'Orders & Delivery', 'Orders & delivery': 'Orders & Delivery', 'Refunds & cancellations': 'Payments & Refunds', 'Refunds & chargebacks': 'Payments & Refunds', 'Payments & refunds': 'Payments & Refunds', 'Technical issues': 'Technical Support', 'Customer service': 'Accounts & Verification' };
 db.tasks.forEach(t => { if (MAP[t.category]) t.category = MAP[t.category]; });
 db.tasks.forEach(t => { delete t.chat; delete t.source; delete t.newMsg; });
 delete db.offset;
@@ -84,7 +85,7 @@ http.createServer(async (req, res) => {
     const url = (req.url || '/').split('?')[0];
     if (req.method === 'GET' && url === '/') {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(fs.readFileSync(path.join(__dirname, 'board.html')));
+      return res.end(fs.readFileSync(HTML_FILE));
     }
 
     if (req.method === 'GET' && url === '/api/auth/status') {
@@ -162,7 +163,7 @@ http.createServer(async (req, res) => {
     if (req.method === 'POST' && url === '/api/tasks') {
       const t = await body(req); if (!t.id) return send(res, 400, { error: 'Task id is required' });
       const i = db.tasks.findIndex(x => x.id === t.id);
-      if (i >= 0) ['title', 'customer', 'phone', 'email', 'userType', 'category', 'priority', 'assignee', 'status', 'newMsg', 'details'].forEach(k => { if (k in t) db.tasks[i][k] = t[k]; }); else db.tasks.push(t);
+      if (i >= 0) ['title', 'customer', 'phone', 'email', 'userType', 'category', 'priority', 'assignee', 'status', 'newMsg', 'details'].forEach(k => { if (k in t) db.tasks[i][k] = t[k]; }); else db.tasks.push({ ...t, created: Date.now() });
       save(); return send(res, 200, {});
     }
     if (req.method === 'POST' && url === '/api/delete') { const b = await body(req); db.tasks = db.tasks.filter(x => x.id !== b.id); save(); return send(res, 200, {}); }
